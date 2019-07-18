@@ -1,6 +1,7 @@
 # `UNM_BIOCOMP_DEPICT`
 
-Molecular depiction classes, including servlets.
+Molecular depiction classes, including mol2img servlets and depict webapp.
+Also includes 2D alignment tools (formerly in `unm_biocomp_molalign`).
 
 ## Dependencies
 
