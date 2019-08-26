@@ -47,7 +47,6 @@ public class depict_servlet extends HttpServlet
   private static String UPLOADDIR=null;	// configured in web.xml
   private static int N_MAX=100; // configured in web.xml
   private static ServletContext CONTEXT=null;
-  //private static ServletConfig CONFIG=null;
   private static ResourceBundle rb=null;
   private static PrintWriter out=null;
   private static ArrayList<String> outputs=null;
@@ -56,7 +55,7 @@ public class depict_servlet extends HttpServlet
   private static ArrayList<Molecule> mols=null;
   private static LinkedHashMap<String,Integer> sizes_h=null;
   private static LinkedHashMap<String,Integer> sizes_w=null;
-  private static int serverport=0;
+  //private static Integer SERVERPORT=null;
   private static String SERVERNAME=null;
   private static String REMOTEHOST=null;
   private static String DATESTR=null;
@@ -64,12 +63,13 @@ public class depict_servlet extends HttpServlet
   private static String color1="#EEEEEE";
   private static MolSearch molsearch=null;
   private static ArrayList<Color> atomColors=null;
+  private static String MOL2IMG_SERVLETURL=null;
 
   /////////////////////////////////////////////////////////////////////////////
   public void doPost(HttpServletRequest request,HttpServletResponse response)
       throws IOException,ServletException
   {
-    serverport=request.getServerPort();
+    //SERVERPORT=request.getServerPort();
     SERVERNAME=request.getServerName();
     if (SERVERNAME.equals("localhost")) SERVERNAME=InetAddress.getLocalHost().getHostAddress();
     REMOTEHOST=request.getHeader("X-Forwarded-For"); // client (original)
@@ -103,7 +103,7 @@ public class depict_servlet extends HttpServlet
       {
         response.setContentType("text/html");
         out=response.getWriter();
-        out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request, "tomcat"));
+        out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request, null));
         out.println(HtmUtils.FooterHtm(errors,true));
         return;
       }
@@ -111,7 +111,7 @@ public class depict_servlet extends HttpServlet
       {
         response.setContentType("text/html");
         out=response.getWriter();
-        out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request, "tomcat"));
+        out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request, null));
         out.println(FormHtm(mrequest,response));
         Depict(mrequest,response);
         out.println(HtmUtils.OutputHtm(outputs));
@@ -124,7 +124,7 @@ public class depict_servlet extends HttpServlet
       {
         response.setContentType("text/html");
         out=response.getWriter();
-        out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request, "tomcat"));
+        out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request, null));
         out.println(HelpHtm());
         out.println(HtmUtils.FooterHtm(errors,true));
       }
@@ -141,7 +141,7 @@ public class depict_servlet extends HttpServlet
       {
         response.setContentType("text/html");
         out=response.getWriter();
-        out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request, "tomcat"));
+        out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request, null));
         out.println(FormHtm(mrequest,response));
         out.println("<SCRIPT>go_init(window.document.mainform)</SCRIPT>");
         out.println(HtmUtils.FooterHtm(errors,true));
@@ -153,6 +153,9 @@ public class depict_servlet extends HttpServlet
       throws IOException,ServletException
   {
     SERVLETNAME=this.getServletName();
+
+    MOL2IMG_SERVLETURL=(CONTEXTPATH+"/mol2img");
+
     outputs=new ArrayList<String>();
     errors=new ArrayList<String>();
     params=new HttpParams();
@@ -161,12 +164,12 @@ public class depict_servlet extends HttpServlet
     sizes_w=new LinkedHashMap<String,Integer>();
 
     String logo_htm="<TABLE CELLSPACING=5 CELLPADDING=5><TR><TD>";
-    String imghtm=("<IMG BORDER=0 SRC=\"/tomcat"+CONTEXTPATH+"/images/biocomp_logo_only.gif\">");
+    String imghtm=("<IMG BORDER=0 SRC=\""+CONTEXTPATH+"/images/biocomp_logo_only.gif\">");
     String tiphtm=(APPNAME+" web app from UNM Translational Informatics.");
     String href=("http://medicine.unm.edu/informatics/");
     logo_htm+=(HtmUtils.HtmTipper(imghtm,tiphtm,href,200,"white"));
     logo_htm+="</TD><TD>";
-    imghtm=("<IMG BORDER=0 SRC=\"/tomcat"+CONTEXTPATH+"/images/chemaxon_powered_100px.png\">");
+    imghtm=("<IMG BORDER=0 SRC=\""+CONTEXTPATH+"/images/chemaxon_powered_100px.png\">");
     tiphtm=("JChem from ChemAxon Ltd.");
     href=("http://www.chemaxon.com");
     logo_htm+=(HtmUtils.HtmTipper(imghtm,tiphtm,href,200,"white"));
@@ -702,29 +705,25 @@ public class depict_servlet extends HttpServlet
         prophtm+=("<LI>"+mol.getName()+"\n"+prophtm_this);
       }
 
-      //String mol2img_servleturl=("http://"+SERVERNAME+":"+serverport);
-      // This is our convention; Apache proxies the 8080 port via /tomcat.
-      String mol2img_servleturl=("http://"+SERVERNAME+"/tomcat");
-      mol2img_servleturl+=(CONTEXTPATH+"/mol2img");
       String imhtm="";
       if (mdlcode!=null)
       {
         imhtm=HtmUtils.Mdlcode2ImgHtm(mdlcode,depictopts,h,w,
-                          mol2img_servleturl,
+                          MOL2IMG_SERVLETURL,
                           params.getVal("zoomable").equals("CHECKED"),4,
                           "go_zoom_mdl2img");
       }
       else if (mrvcode!=null)
       {
         imhtm=HtmUtils.Mrvcode2ImgHtm(mrvcode,atomColors,depictopts,h,w,
-                          mol2img_servleturl,
+                          MOL2IMG_SERVLETURL,
                           params.getVal("zoomable").equals("CHECKED"),4,
                           "go_zoom_mrv2img");
       }
       else
       {
         imhtm=HtmUtils.Smi2ImgHtm(smiles,depictopts,h,w,
-                          mol2img_servleturl,
+                          MOL2IMG_SERVLETURL,
                           params.getVal("zoomable").equals("CHECKED"),4,
                           "go_zoom_smi2img");
       }
@@ -901,14 +900,13 @@ public class depict_servlet extends HttpServlet
     super.init(conf);
     CONTEXT=getServletContext();	// inherited method
     CONTEXTPATH=CONTEXT.getContextPath();
-    //CONFIG=conf;
     try { APPNAME=conf.getInitParameter("APPNAME"); }
     catch (Exception e) { APPNAME=this.getServletName(); }
     UPLOADDIR=conf.getInitParameter("UPLOADDIR");
     if (UPLOADDIR==null)
       throw new ServletException("Please supply UPLOADDIR parameter");
     LOGDIR=conf.getInitParameter("LOGDIR")+CONTEXTPATH;
-    if (LOGDIR==null) LOGDIR="/usr/local/tomcat/logs"+CONTEXTPATH;
+    if (LOGDIR==null) LOGDIR="/tmp"+CONTEXTPATH+"_logs";
     try { N_MAX=Integer.parseInt(conf.getInitParameter("N_MAX")); }
     catch (Exception e) { N_MAX=100; }
   }
