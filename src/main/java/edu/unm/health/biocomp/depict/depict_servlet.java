@@ -831,7 +831,7 @@ public class depict_servlet extends HttpServlet
 "  form.use2d.checked=true;\n"+
 "  form.zoomable.checked=true;\n"+
 "  form.showprops.checked=false;\n"+
-"  form.transparent.checked=true;\n"+
+"  form.transparent.checked=false;\n"+
 "  form.verbose.checked=false;\n"+
 "}\n"+
 "function checkform(form)\n"+
