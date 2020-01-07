@@ -5,6 +5,14 @@
   <version>0.0.1-SNAPSHOT</version>
   <name>UNM_BIOCOMP_DEPICT</name>
   <description>Depiction classes; includes mol2img servlets and depict webapp</description>
+  <url>https://github.com/unmtransinfo/unm_biocomp_depict</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jdk.version>1.8</jdk.version>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
   
   <dependencies>
     <dependency>
