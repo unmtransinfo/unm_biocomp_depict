@@ -59,7 +59,7 @@ public class depict_servlet extends HttpServlet
   private static String SERVERNAME=null;
   private static String REMOTEHOST=null;
   private static String DATESTR=null;
-  private static File logfile=null;
+  private static File LOGFILE=null;
   private static String color1="#EEEEEE";
   private static MolSearch molsearch=null;
   private static ArrayList<Color> atomColors=null;
@@ -67,8 +67,8 @@ public class depict_servlet extends HttpServlet
   private static String PROXY_PREFIX=null;	// configured in web.xml
 
   /////////////////////////////////////////////////////////////////////////////
-  public void doPost(HttpServletRequest request,HttpServletResponse response)
-      throws IOException,ServletException
+  public void doPost(HttpServletRequest request, HttpServletResponse response)
+      throws IOException, ServletException
   {
     //SERVERPORT=request.getServerPort();
     SERVERNAME=request.getServerName();
@@ -83,23 +83,23 @@ public class depict_servlet extends HttpServlet
     {
       REMOTEHOST=request.getRemoteAddr(); // client (may be proxy)
     }
-    rb=ResourceBundle.getBundle("LocalStrings",request.getLocale());
+    rb=ResourceBundle.getBundle("LocalStrings", request.getLocale());
 
     MultipartRequest mrequest=null;
     if (request.getMethod().equalsIgnoreCase("POST"))
     {
-      try { mrequest=new MultipartRequest(request,UPLOADDIR,10*1024*1024,"ISO-8859-1",
+      try { mrequest=new MultipartRequest(request, UPLOADDIR, 10*1024*1024, "ISO-8859-1",
                                     new DefaultFileRenamePolicy()); }
       catch (IOException lEx) {
-        this.getServletContext().log("not a valid MultipartRequest",lEx); }
+        this.getServletContext().log("not a valid MultipartRequest", lEx); }
     }
 
     // main logic:
     ArrayList<String> cssincludes = new
 ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/css/biocomp.css"));
     ArrayList<String> jsincludes = new
-ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js",PROXY_PREFIX+CONTEXTPATH+"/js/ddtip.js"));
-    boolean ok=initialize(request,mrequest);
+ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY_PREFIX+CONTEXTPATH+"/js/ddtip.js"));
+    boolean ok=initialize(request, mrequest);
     if (mrequest!=null)	//method=POST, normal operation
     {
       if (!ok)
@@ -107,7 +107,7 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js",PROXY_
         response.setContentType("text/html");
         out=response.getWriter();
         out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request));
-        out.println(HtmUtils.FooterHtm(errors,true));
+        out.println(HtmUtils.FooterHtm(errors, true));
         return;
       }
       else if (mrequest.getParameter("depict").equals("TRUE"))
@@ -115,10 +115,10 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js",PROXY_
         response.setContentType("text/html");
         out=response.getWriter();
         out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request));
-        out.println(FormHtm(mrequest,response));
-        Depict(mrequest,response);
+        out.println(FormHtm(mrequest, response));
+        Depict(mrequest, response);
         out.println(HtmUtils.OutputHtm(outputs));
-        out.println(HtmUtils.FooterHtm(errors,true));
+        out.println(HtmUtils.FooterHtm(errors, true));
       }
     }
     else
@@ -187,78 +187,79 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js",PROXY_
     sizes_h.put("xl",480); sizes_w.put("xl",640);
 
     //Create webapp-specific log dir if necessary:
-    File dout=new File(LOGDIR);
+    File dout = new File(LOGDIR);
     if (!dout.exists())
     {
-      boolean ok=dout.mkdir();
+      boolean ok = dout.mkdir();
       System.err.println("LOGDIR creation "+(ok?"succeeded":"failed")+": "+LOGDIR);
       if (!ok)
       {
-        errors.add("ERROR: could not create LOGDIR: "+LOGDIR);
-        return false;
+        errors.add("ERROR: could not create LOGDIR (logging disabled): "+LOGDIR);
       }
     }
 
-    String logpath=LOGDIR+"/"+SERVLETNAME+".log";
-    logfile=new File(logpath);
-    if (!logfile.exists())
+    LOGFILE = new File(LOGDIR+"/"+SERVLETNAME+".log");
+    if (!LOGFILE.exists())
     {
       try {
-        logfile.createNewFile();
+        LOGFILE.createNewFile();
+        LOGFILE.setWritable(true,true);
+        PrintWriter out_log=new PrintWriter(LOGFILE);
+        out_log.println("date\tip\tN"); 
+        out_log.flush();
+        out_log.close();
       }
       catch (IOException e)
       {
-        errors.add("ERROR: Cannot create log file:"+e.getMessage());
-        return false;
+        errors.add("ERROR: Cannot create log file (logging disabled):"+e.getMessage());
+        LOGFILE = null;
       }
-      logfile.setWritable(true,true);
-      PrintWriter out_log=new PrintWriter(logfile);
-      out_log.println("date\tip\tN"); 
-      out_log.flush();
-      out_log.close();
     }
-    if (!logfile.canWrite())
+    else if (!LOGFILE.canWrite())
     {
-      errors.add("ERROR: Log file not writable.");
-      return false;
+      errors.add("ERROR: Log file not writable (logging disabled).");
+      LOGFILE = null;
     }
-    BufferedReader buff=new BufferedReader(new FileReader(logfile));
-    if (buff==null)
+    if (LOGFILE!=null)
     {
-      errors.add("ERROR: Cannot open log file.");
-      return false;
+      BufferedReader buff = new BufferedReader(new FileReader(LOGFILE));
+      if (buff==null)
+      {
+        errors.add("ERROR: Cannot open log file (logging disabled).");
+      }
+      else
+      {
+        int n_lines=0;
+        String line=null;
+        String startdate=null;
+        Calendar calendar=Calendar.getInstance();
+        while ((line=buff.readLine())!=null)
+        {
+          ++n_lines;
+          String[] fields=Pattern.compile("\\t").split(line);
+          if (n_lines==2) startdate=fields[0];
+        }
+        buff.close(); //Else can result in error: "Too many open files"
+        if (n_lines>2)
+        {
+          calendar.set(Integer.parseInt(startdate.substring(0,4)),
+                   Integer.parseInt(startdate.substring(4,6))-1,
+                   Integer.parseInt(startdate.substring(6,8)),
+                   Integer.parseInt(startdate.substring(8,10)),
+                   Integer.parseInt(startdate.substring(10,12)),0);
+    
+          DateFormat df=DateFormat.getDateInstance(DateFormat.FULL,Locale.US);
+          errors.add("since "+df.format(calendar.getTime())+", times used: "+(n_lines-1));
+        }
+        calendar.setTime(new Date());
+        DATESTR=String.format("%04d%02d%02d%02d%02d",
+          calendar.get(Calendar.YEAR),
+          calendar.get(Calendar.MONTH)+1,
+          calendar.get(Calendar.DAY_OF_MONTH),
+          calendar.get(Calendar.HOUR_OF_DAY),
+          calendar.get(Calendar.MINUTE));
+      }
     }
-    int n_lines=0;
-    String line=null;
-    String startdate=null;
-    while ((line=buff.readLine())!=null)
-    {
-      ++n_lines;
-      String[] fields=Pattern.compile("\\t").split(line);
-      if (n_lines==2) startdate=fields[0];
-    }
-    buff.close(); //Else can result in error: "Too many open files"
-    Calendar calendar=Calendar.getInstance();
-    if (n_lines>2)
-    {
-      calendar.set(Integer.parseInt(startdate.substring(0,4)),
-               Integer.parseInt(startdate.substring(4,6))-1,
-               Integer.parseInt(startdate.substring(6,8)),
-               Integer.parseInt(startdate.substring(8,10)),
-               Integer.parseInt(startdate.substring(10,12)),0);
-
-      DateFormat df=DateFormat.getDateInstance(DateFormat.FULL,Locale.US);
-      errors.add("since "+df.format(calendar.getTime())+", times used: "+(n_lines-1));
-    }
-
-    calendar.setTime(new Date());
-    DATESTR=String.format("%04d%02d%02d%02d%02d",
-      calendar.get(Calendar.YEAR),
-      calendar.get(Calendar.MONTH)+1,
-      calendar.get(Calendar.DAY_OF_MONTH),
-      calendar.get(Calendar.HOUR_OF_DAY),
-      calendar.get(Calendar.MINUTE));
-
     LicenseManager.refresh();
 
     if (mrequest==null) return false;
@@ -274,7 +275,6 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js",PROXY_
 
     if (params.isChecked("verbose"))
     {
-      //errors.add("JChem version: "+chemaxon.jchem.version.VersionInfo.getVersion());
       errors.add("JChem version: "+com.chemaxon.version.VersionInfo.getVersion());
       errors.add("server: "+CONTEXT.getServerInfo()+" [API:"+CONTEXT.getMajorVersion()+"."+CONTEXT.getMinorVersion()+"]");
       errors.add("ServletName: "+this.getServletName());
@@ -773,18 +773,20 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js",PROXY_
     outputs.add(prophtm+"</OL>\n");
     errors.add("n_mols: "+n_mols);
 
-    PrintWriter out_log=new PrintWriter(
-      new BufferedWriter(new FileWriter(logfile,true)));
-    out_log.printf("%s\t%s\t%d\n",DATESTR,REMOTEHOST,n_mols); 
-    out_log.close();
+    if (LOGFILE!=null)
+    {
+      PrintWriter out_log=new PrintWriter(new BufferedWriter(new FileWriter(LOGFILE, true)));
+    out_log.printf("%s\t%s\t%d\n", DATESTR, REMOTEHOST, n_mols); 
+      out_log.close();
+    }
   }
   /////////////////////////////////////////////////////////////////////////////
   private static ArrayList<String> SmiPropTags(byte[] inbytes)
-    throws IOException,UnsupportedEncodingException
+    throws IOException, UnsupportedEncodingException
   {
     ArrayList<String> tags=new ArrayList<String>();
     int nfields=0;
-    String intxt=new String(inbytes,"utf-8");
+    String intxt=new String(inbytes, "utf-8");
     BufferedReader buff=new BufferedReader(new StringReader(intxt));
     String line=buff.readLine();
     if (line!=null)
@@ -793,14 +795,14 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js",PROXY_
       nfields=fields.length-1;
       if (fields[0].startsWith("#"))
       {
-        fields[0]=fields[0].replace("^#+","");
+        fields[0]=fields[0].replace("^#+", "");
         for (int i=1;i<=nfields;++i)
           tags.add(fields[i]);
       }
       else
       {
         for (int i=1;i<=nfields;++i)
-          tags.add(String.format("field%02d",i));
+          tags.add(String.format("field%02d", i));
       }
     }
     buff.close();
@@ -915,9 +917,9 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js",PROXY_
     PROXY_PREFIX=((conf.getInitParameter("PROXY_PREFIX")!=null)?conf.getInitParameter("PROXY_PREFIX"):"");
   }
   /////////////////////////////////////////////////////////////////////////////
-  public void doGet(HttpServletRequest request,HttpServletResponse response)
+  public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws IOException, ServletException
   {
-    doPost(request,response);
+    doPost(request, response);
   }
 }
