@@ -186,6 +186,10 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
     sizes_h.put("l",280); sizes_w.put("l",380);
     sizes_h.put("xl",480); sizes_w.put("xl",640);
 
+    Calendar calendar=Calendar.getInstance();
+    calendar.setTime(new Date());
+    DATESTR=String.format("%04d%02d%02d%02d%02d", calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH)+1, calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
+
     //Create webapp-specific log dir if necessary:
     File dout = new File(LOGDIR);
     if (!dout.exists())
@@ -197,7 +201,6 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
         errors.add("ERROR: could not create LOGDIR (logging disabled): "+LOGDIR);
       }
     }
-
     LOGFILE = new File(LOGDIR+"/"+SERVLETNAME+".log");
     if (!LOGFILE.exists())
     {
@@ -211,13 +214,13 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       }
       catch (IOException e)
       {
-        errors.add("ERROR: Cannot create log file (logging disabled):"+e.getMessage());
+        errors.add("ERROR: Cannot create LOGFILE (logging disabled):"+e.getMessage());
         LOGFILE = null;
       }
     }
     else if (!LOGFILE.canWrite())
     {
-      errors.add("ERROR: Log file not writable (logging disabled).");
+      errors.add("ERROR: LOGFILE not writable (logging disabled).");
       LOGFILE = null;
     }
     if (LOGFILE!=null)
@@ -225,19 +228,18 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       BufferedReader buff = new BufferedReader(new FileReader(LOGFILE));
       if (buff==null)
       {
-        errors.add("ERROR: Cannot open log file (logging disabled).");
+        errors.add("ERROR: Cannot open LOGFILE (logging disabled).");
       }
       else
       {
         int n_lines=0;
         String line=null;
         String startdate=null;
-        Calendar calendar=Calendar.getInstance();
         while ((line=buff.readLine())!=null)
         {
           ++n_lines;
-          String[] fields=Pattern.compile("\\t").split(line);
-          if (n_lines==2) startdate=fields[0];
+          String[] fields = Pattern.compile("\\t").split(line);
+          if (n_lines==2) startdate = fields[0];
         }
         buff.close(); //Else can result in error: "Too many open files"
         if (n_lines>2)
@@ -247,18 +249,16 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
                    Integer.parseInt(startdate.substring(6,8)),
                    Integer.parseInt(startdate.substring(8,10)),
                    Integer.parseInt(startdate.substring(10,12)),0);
-    
-          DateFormat df=DateFormat.getDateInstance(DateFormat.FULL,Locale.US);
+          DateFormat df = DateFormat.getDateInstance(DateFormat.FULL,Locale.US);
           errors.add("since "+df.format(calendar.getTime())+", times used: "+(n_lines-1));
         }
-        calendar.setTime(new Date());
-        DATESTR=String.format("%04d%02d%02d%02d%02d",
-          calendar.get(Calendar.YEAR),
-          calendar.get(Calendar.MONTH)+1,
-          calendar.get(Calendar.DAY_OF_MONTH),
-          calendar.get(Calendar.HOUR_OF_DAY),
-          calendar.get(Calendar.MINUTE));
       }
+    }
+
+    try {
+      LicenseManager.setLicenseFile(CONTEXT.getRealPath("")+"/.chemaxon/license.cxl");
+    } catch (Exception e) {
+      errors.add("ERROR: ChemAxon LicenseManager error: "+e.getMessage());
     }
     LicenseManager.refresh();
 
