@@ -70,10 +70,10 @@ public class depict_servlet extends HttpServlet
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException, ServletException
   {
-    //SERVERPORT=request.getServerPort();
-    SERVERNAME=request.getServerName();
+    //SERVERPORT = request.getServerPort();
+    SERVERNAME = request.getServerName();
     if (SERVERNAME.equals("localhost")) SERVERNAME=InetAddress.getLocalHost().getHostAddress();
-    REMOTEHOST=request.getHeader("X-Forwarded-For"); // client (original)
+    REMOTEHOST = request.getHeader("X-Forwarded-For"); // client (original)
     if (REMOTEHOST!=null)
     {
       String[] addrs=Pattern.compile(",").split(REMOTEHOST);
@@ -81,31 +81,29 @@ public class depict_servlet extends HttpServlet
     }
     else
     {
-      REMOTEHOST=request.getRemoteAddr(); // client (may be proxy)
+      REMOTEHOST = request.getRemoteAddr(); // client (may be proxy)
     }
-    rb=ResourceBundle.getBundle("LocalStrings", request.getLocale());
+    rb = ResourceBundle.getBundle("LocalStrings", request.getLocale());
 
     MultipartRequest mrequest=null;
     if (request.getMethod().equalsIgnoreCase("POST"))
     {
-      try { mrequest=new MultipartRequest(request, UPLOADDIR, 10*1024*1024, "ISO-8859-1",
+      try { mrequest = new MultipartRequest(request, UPLOADDIR, 10*1024*1024, "ISO-8859-1",
                                     new DefaultFileRenamePolicy()); }
       catch (IOException lEx) {
         this.getServletContext().log("not a valid MultipartRequest", lEx); }
     }
 
     // main logic:
-    ArrayList<String> cssincludes = new
-ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/css/biocomp.css"));
-    ArrayList<String> jsincludes = new
-ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY_PREFIX+CONTEXTPATH+"/js/ddtip.js"));
-    boolean ok=initialize(request, mrequest);
+    ArrayList<String> cssincludes = new ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/css/biocomp.css"));
+    ArrayList<String> jsincludes = new ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY_PREFIX+CONTEXTPATH+"/js/ddtip.js"));
+    boolean ok = initialize(request, mrequest);
     if (mrequest!=null)	//method=POST, normal operation
     {
       if (!ok)
       {
         response.setContentType("text/html");
-        out=response.getWriter();
+        out = response.getWriter();
         out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request));
         out.println(HtmUtils.FooterHtm(errors, true));
         return;
@@ -113,7 +111,7 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       else if (mrequest.getParameter("depict").equals("TRUE"))
       {
         response.setContentType("text/html");
-        out=response.getWriter();
+        out = response.getWriter();
         out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request));
         out.println(FormHtm(mrequest, response));
         Depict(mrequest, response);
@@ -126,7 +124,7 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       if (request.getParameter("help")!=null)	// GET method, help=TRUE
       {
         response.setContentType("text/html");
-        out=response.getWriter();
+        out = response.getWriter();
         out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request));
         out.println(HelpHtm());
         out.println(HtmUtils.FooterHtm(errors,true));
@@ -134,7 +132,7 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       else if (request.getParameter("test")!=null)	// GET method, test=TRUE
       {
         response.setContentType("text/plain");
-        out=response.getWriter();
+        out = response.getWriter();
         HashMap<String,String> t = new HashMap<String,String>();
         t.put("JCHEM_LICENSE_OK",(LicenseManager.isLicensed(LicenseManager.JCHEM)?"True":"False"));
         t.put("JCHEM_MOLSEARCH_LICENSE_OK",(((new MolSearch()).isLicensed())?"True":"False"));
@@ -143,28 +141,26 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       else	// GET method, initial invocation of servlet w/ no params
       {
         response.setContentType("text/html");
-        out=response.getWriter();
+        out = response.getWriter();
         out.println(HtmUtils.HeaderHtm(APPNAME, jsincludes, cssincludes, JavaScript(), "", color1, request));
-        out.println(FormHtm(mrequest,response));
+        out.println(FormHtm(mrequest, response));
         out.println("<SCRIPT>go_init(window.document.mainform)</SCRIPT>");
         out.println(HtmUtils.FooterHtm(errors,true));
       }
     }
   }
   /////////////////////////////////////////////////////////////////////////////
-  private boolean initialize(HttpServletRequest request,MultipartRequest mrequest)
+  private boolean initialize(HttpServletRequest request, MultipartRequest mrequest)
       throws IOException,ServletException
   {
-    SERVLETNAME=this.getServletName();
-
-    MOL2IMG_SERVLETURL=(PROXY_PREFIX+CONTEXTPATH+"/mol2img");
-
-    outputs=new ArrayList<String>();
-    errors=new ArrayList<String>();
-    params=new HttpParams();
-    mols=new ArrayList<Molecule>();
-    sizes_h=new LinkedHashMap<String,Integer>();
-    sizes_w=new LinkedHashMap<String,Integer>();
+    SERVLETNAME = this.getServletName();
+    MOL2IMG_SERVLETURL =( PROXY_PREFIX+CONTEXTPATH+"/mol2img");
+    outputs = new ArrayList<String>();
+    errors = new ArrayList<String>();
+    params = new HttpParams();
+    mols = new ArrayList<Molecule>();
+    sizes_h = new LinkedHashMap<String,Integer>();
+    sizes_w = new LinkedHashMap<String,Integer>();
 
     String logo_htm="<TABLE CELLSPACING=5 CELLPADDING=5><TR><TD>";
     String imghtm=("<IMG BORDER=0 SRC=\""+PROXY_PREFIX+CONTEXTPATH+"/images/biocomp_logo_only.gif\">");
@@ -186,7 +182,7 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
     sizes_h.put("l",280); sizes_w.put("l",380);
     sizes_h.put("xl",480); sizes_w.put("xl",640);
 
-    Calendar calendar=Calendar.getInstance();
+    Calendar calendar = Calendar.getInstance();
     calendar.setTime(new Date());
     DATESTR=String.format("%04d%02d%02d%02d%02d", calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH)+1, calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
 
@@ -198,7 +194,7 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       System.err.println("LOGDIR creation "+(ok?"succeeded":"failed")+": "+LOGDIR);
       if (!ok)
       {
-        errors.add("ERROR: could not create LOGDIR (logging disabled): "+LOGDIR);
+        errors.add("WARNING: could not create LOGDIR (logging disabled): "+LOGDIR);
       }
     }
     LOGFILE = new File(LOGDIR+"/"+SERVLETNAME+".log");
@@ -207,20 +203,20 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       try {
         LOGFILE.createNewFile();
         LOGFILE.setWritable(true,true);
-        PrintWriter out_log=new PrintWriter(LOGFILE);
+        PrintWriter out_log = new PrintWriter(LOGFILE);
         out_log.println("date\tip\tN"); 
         out_log.flush();
         out_log.close();
       }
       catch (IOException e)
       {
-        errors.add("ERROR: Cannot create LOGFILE (logging disabled):"+e.getMessage());
+        errors.add("WARNING: Cannot create LOGFILE (logging disabled):"+e.getMessage());
         LOGFILE = null;
       }
     }
     else if (!LOGFILE.canWrite())
     {
-      errors.add("ERROR: LOGFILE not writable (logging disabled).");
+      errors.add("WARNING: LOGFILE not writable (logging disabled).");
       LOGFILE = null;
     }
     if (LOGFILE!=null)
@@ -228,7 +224,7 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       BufferedReader buff = new BufferedReader(new FileReader(LOGFILE));
       if (buff==null)
       {
-        errors.add("ERROR: Cannot open LOGFILE (logging disabled).");
+        errors.add("WARNING: Cannot open LOGFILE (logging disabled).");
       }
       else
       {
@@ -255,12 +251,9 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       }
     }
 
-    try {
-      LicenseManager.setLicenseFile(CONTEXT.getRealPath("")+"/.chemaxon/license.cxl");
-    } catch (Exception e) {
-      errors.add("ERROR: ChemAxon LicenseManager error: "+e.getMessage());
-    }
-    LicenseManager.refresh();
+    //try { LicenseManager.setLicenseFile(CONTEXT.getRealPath("")+"/.chemaxon/license.cxl"); }
+    //catch (Exception e) { errors.add("ERROR: "+e.getMessage()); }
+    //LicenseManager.refresh();
 
     if (mrequest==null) return false;
 
@@ -326,50 +319,50 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
     MolImporter molReader=null;
     if (params.getVal("molfmt").equals("automatic"))
     {
-      String orig_fname=mrequest.getOriginalFileName(fname);
-      String molfmt_auto=MFileFormatUtil.getMostLikelyMolFormat(orig_fname);
+      String orig_fname = mrequest.getOriginalFileName(fname);
+      String molfmt_auto = MFileFormatUtil.getMostLikelyMolFormat(orig_fname);
       if (orig_fname!=null && molfmt_auto!=null)
       {
-        molReader=new MolImporter(new ByteArrayInputStream(inbytes),molfmt_auto);
+        molReader = new MolImporter(new ByteArrayInputStream(inbytes),molfmt_auto);
       }
       else
       {
-        molReader=new MolImporter(new ByteArrayInputStream(inbytes));
+        molReader = new MolImporter(new ByteArrayInputStream(inbytes));
       }
     }
     else
     {
-      String ifmt=params.getVal("molfmt");
+      String ifmt = params.getVal("molfmt");
       if (ifmt.startsWith("smiles") && params.isChecked("showprops"))
       {
         ifmt+=":";
-        ArrayList<String> tags=SmiPropTags(inbytes);
+        ArrayList<String> tags = SmiPropTags(inbytes);
         for (int i=0;i<tags.size();++i)
         {
           if (i>0) ifmt+=(",");
           ifmt+=("f"+tags.get(i));
         }
       }
-      molReader=new MolImporter(new ByteArrayInputStream(inbytes),ifmt);
+      molReader = new MolImporter(new ByteArrayInputStream(inbytes),ifmt);
     }
-    String fmt=molReader.getFormat();
+    String fmt = molReader.getFormat();
     params.setVal("molfmt_auto",fmt);
 
     if (params.getVal("molfmt").equals("mrv") ||
              params.getVal("molfmt_auto").equals("mrv"))
     {
       // atomcolors idxs correspond to the mrvSetSeq values, assigned by MolAtom::setSetSeq().
-      atomColors= new ArrayList<Color>();
+      atomColors = new ArrayList<Color>();
       MolImporter molReader2=null;
       if (ifile!=null)
         molReader2 = new MolImporter(new FileInputStream(ifile));
       else
-        molReader2=new MolImporter(new ByteArrayInputStream(inbytes),"mrv");
-      MDocument mdoc=molReader2.nextDoc();
+        molReader2 = new MolImporter(new ByteArrayInputStream(inbytes),"mrv");
+      MDocument mdoc = molReader2.nextDoc();
       molReader2.close();
       for (int i=0;i<10;++i)
       {
-        Color c=mdoc.getAtomSetColor(i);
+        Color c = mdoc.getAtomSetColor(i);
         if (c==null) break;
         atomColors.add(c);
         if (params.isChecked("verbose"))
@@ -379,19 +372,19 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
 
     if (ifile!=null) ifile.delete();
 
-    MFileFormat mffmt=MFileFormatUtil.getFormat(fmt);
+    MFileFormat mffmt = MFileFormatUtil.getFormat(fmt);
 
     if (params.isChecked("file2txt"))
     {
       if (mffmt==MFileFormat.CDX) //binary
       {
-        intxt=Base64Encoder.encode(inbytes);
+        intxt = Base64Encoder.encode(inbytes);
         if (params.getVal("molfmt").equals("automatic"))
           params.setVal("molfmt","cdx");
       }
       else
       {
-        intxt=new String(inbytes,"utf-8");
+        intxt = new String(inbytes,"utf-8");
       }
       params.setVal("intxt",intxt);
     }
@@ -422,7 +415,7 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
 
     if (params.isChecked("parts2mols")) 
     {
-      mols=Parts2mols(mols);
+      mols = Parts2mols(mols);
     }
 
     if (params.getVal("smarts").length()>0)
@@ -465,7 +458,7 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
     }
     if (n_failed>0) errors.add("ERRORS (unable to read mol): "+n_failed);
     if (params.isChecked("use2d"))
-      errors.add(String.format("%d / %d mols include 2D.",n2d,mols.size()));
+      errors.add(String.format("%d / %d mols include 2D.", n2d, mols.size()));
     return true;
   }
   /////////////////////////////////////////////////////////////////////////////
@@ -646,9 +639,9 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       {
         try {
           if (params.isChecked("showh")) 
-            mrvcode=mol.exportToFormat("base64:gzip:mrv:+H");
+            mrvcode = mol.exportToFormat("base64:gzip:mrv:+H");
           else
-            mrvcode=mol.exportToFormat("base64:gzip:mrv");
+            mrvcode = mol.exportToFormat("base64:gzip:mrv");
         }
         catch (MolExportException e) {
           errors.add(e.getMessage());
@@ -659,9 +652,9 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       {
         try {
           if (params.isChecked("showh")) 
-            mdlcode=mol.exportToFormat("base64:gzip:mol:+H");
+            mdlcode = mol.exportToFormat("base64:gzip:mol:+H");
           else
-            mdlcode=mol.exportToFormat("base64:gzip:mol:-H");
+            mdlcode = mol.exportToFormat("base64:gzip:mol:-H");
         }
         catch (MolExportException e) {
           errors.add(e.getMessage());
@@ -673,20 +666,20 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       {
         // Note: Cannot export smarts query-mol as smiles;
         // however, can depict a query-mol.
-        smiles=mol.exportToFormat("smarts");
+        smiles = mol.exportToFormat("smarts");
       }
       else
       {
-        try { smiles=mol.exportToFormat("smiles:u"); }
+        try { smiles = mol.exportToFormat("smiles:u"); }
         catch (MolExportException e) {
           if (params.isChecked("verbose")) errors.add(e.getMessage());
-          try { smiles=mol.exportToFormat("cxsmiles:u"); }
+          try { smiles = mol.exportToFormat("cxsmiles:u"); }
           catch (MolExportException e2) {
             if (params.isChecked("verbose")) errors.add(e2.getMessage());
-            try { smiles=mol.exportToFormat("smarts:u"); }
+            try { smiles = mol.exportToFormat("smarts:u"); }
             catch (MolExportException e3) {
               if (params.isChecked("verbose")) errors.add(e3.getMessage());
-              try { smiles=mol.exportToFormat("cxsmarts:u"); }
+              try { smiles = mol.exportToFormat("cxsmarts:u"); }
               catch (MolExportException e4) {
                 errors.add(e4.getMessage());
                 smiles="";
@@ -711,21 +704,21 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
       String imhtm="";
       if (mdlcode!=null)
       {
-        imhtm=HtmUtils.Mdlcode2ImgHtm(mdlcode,depictopts,h,w,
+        imhtm = HtmUtils.Mdlcode2ImgHtm(mdlcode,depictopts,h,w,
                           MOL2IMG_SERVLETURL,
                           params.getVal("zoomable").equals("CHECKED"),4,
                           "go_zoom_mdl2img");
       }
       else if (mrvcode!=null)
       {
-        imhtm=HtmUtils.Mrvcode2ImgHtm(mrvcode,atomColors,depictopts,h,w,
+        imhtm = HtmUtils.Mrvcode2ImgHtm(mrvcode,atomColors,depictopts,h,w,
                           MOL2IMG_SERVLETURL,
                           params.getVal("zoomable").equals("CHECKED"),4,
                           "go_zoom_mrv2img");
       }
       else
       {
-        imhtm=HtmUtils.Smi2ImgHtm(smiles,depictopts,h,w,
+        imhtm = HtmUtils.Smi2ImgHtm(smiles,depictopts,h,w,
                           MOL2IMG_SERVLETURL,
                           params.getVal("zoomable").equals("CHECKED"),4,
                           "go_zoom_smi2img");
@@ -747,12 +740,12 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
         molsearch.setTarget(mol);
         int[][] matchs=null;
         try {
-          matchs=molsearch.findAll();
+          matchs = molsearch.findAll();
         }
         catch (SearchException e) {
           errors.add(e.getMessage());
         }
-        int n_matchs=((matchs!=null)?matchs.length:0);
+        int n_matchs =(( matchs!=null)?matchs.length:0);
         errors.add("smarts matches: "+n_matchs);
       }
 
@@ -775,7 +768,7 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
 
     if (LOGFILE!=null)
     {
-      PrintWriter out_log=new PrintWriter(new BufferedWriter(new FileWriter(LOGFILE, true)));
+      PrintWriter out_log = new PrintWriter(new BufferedWriter(new FileWriter(LOGFILE, true)));
     out_log.printf("%s\t%s\t%d\n", DATESTR, REMOTEHOST, n_mols); 
       out_log.close();
     }
@@ -784,14 +777,14 @@ ArrayList<String>(Arrays.asList(PROXY_PREFIX+CONTEXTPATH+"/js/biocomp.js", PROXY
   private static ArrayList<String> SmiPropTags(byte[] inbytes)
     throws IOException, UnsupportedEncodingException
   {
-    ArrayList<String> tags=new ArrayList<String>();
+    ArrayList<String> tags = new ArrayList<String>();
     int nfields=0;
-    String intxt=new String(inbytes, "utf-8");
-    BufferedReader buff=new BufferedReader(new StringReader(intxt));
+    String intxt = new String(inbytes, "utf-8");
+    BufferedReader buff = new BufferedReader(new StringReader(intxt));
     String line=buff.readLine();
     if (line!=null)
     {
-      String[] fields=Pattern.compile("\\t").split(line);
+      String[] fields = Pattern.compile("\\t").split(line);
       nfields=fields.length-1;
       if (fields[0].startsWith("#"))
       {
