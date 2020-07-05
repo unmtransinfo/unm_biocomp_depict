@@ -42,7 +42,6 @@ public class depict_servlet extends HttpServlet
 {
   private static String SERVLETNAME=null;
   private static String CONTEXTPATH=null;
-  private static String LOGDIR=null;	// configured in web.xml
   private static String APPNAME=null;	// configured in web.xml
   private static String UPLOADDIR=null;	// configured in web.xml
   private static int N_MAX=100; // configured in web.xml
@@ -58,8 +57,6 @@ public class depict_servlet extends HttpServlet
   //private static Integer SERVERPORT=null;
   private static String SERVERNAME=null;
   private static String REMOTEHOST=null;
-  private static String DATESTR=null;
-  private static File LOGFILE=null;
   private static String color1="#EEEEEE";
   private static MolSearch molsearch=null;
   private static ArrayList<Color> atomColors=null;
@@ -182,75 +179,6 @@ public class depict_servlet extends HttpServlet
     sizes_h.put("l",280); sizes_w.put("l",380);
     sizes_h.put("xl",480); sizes_w.put("xl",640);
 
-    Calendar calendar = Calendar.getInstance();
-    calendar.setTime(new Date());
-    DATESTR=String.format("%04d%02d%02d%02d%02d", calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH)+1, calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
-
-    //Create webapp-specific log dir if necessary:
-    File dout = new File(LOGDIR);
-    if (!dout.exists())
-    {
-      boolean ok = dout.mkdir();
-      System.err.println("LOGDIR creation "+(ok?"succeeded":"failed")+": "+LOGDIR);
-      if (!ok)
-      {
-        errors.add("WARNING: could not create LOGDIR (logging disabled): "+LOGDIR);
-      }
-    }
-    LOGFILE = new File(LOGDIR+"/"+SERVLETNAME+".log");
-    if (!LOGFILE.exists())
-    {
-      try {
-        LOGFILE.createNewFile();
-        LOGFILE.setWritable(true,true);
-        PrintWriter out_log = new PrintWriter(LOGFILE);
-        out_log.println("date\tip\tN"); 
-        out_log.flush();
-        out_log.close();
-      }
-      catch (IOException e)
-      {
-        errors.add("WARNING: Cannot create LOGFILE (logging disabled):"+e.getMessage());
-        LOGFILE = null;
-      }
-    }
-    else if (!LOGFILE.canWrite())
-    {
-      errors.add("WARNING: LOGFILE not writable (logging disabled).");
-      LOGFILE = null;
-    }
-    if (LOGFILE!=null)
-    {
-      BufferedReader buff = new BufferedReader(new FileReader(LOGFILE));
-      if (buff==null)
-      {
-        errors.add("WARNING: Cannot open LOGFILE (logging disabled).");
-      }
-      else
-      {
-        int n_lines=0;
-        String line=null;
-        String startdate=null;
-        while ((line=buff.readLine())!=null)
-        {
-          ++n_lines;
-          String[] fields = Pattern.compile("\\t").split(line);
-          if (n_lines==2) startdate = fields[0];
-        }
-        buff.close(); //Else can result in error: "Too many open files"
-        if (n_lines>2)
-        {
-          calendar.set(Integer.parseInt(startdate.substring(0,4)),
-                   Integer.parseInt(startdate.substring(4,6))-1,
-                   Integer.parseInt(startdate.substring(6,8)),
-                   Integer.parseInt(startdate.substring(8,10)),
-                   Integer.parseInt(startdate.substring(10,12)),0);
-          DateFormat df = DateFormat.getDateInstance(DateFormat.FULL,Locale.US);
-          errors.add("since "+df.format(calendar.getTime())+", times used: "+(n_lines-1));
-        }
-      }
-    }
-
     //try { LicenseManager.setLicenseFile(CONTEXT.getRealPath("")+"/.chemaxon/license.cxl"); }
     //catch (Exception e) { errors.add("ERROR: "+e.getMessage()); }
     //LicenseManager.refresh();
@@ -302,13 +230,9 @@ public class depict_servlet extends HttpServlet
     else if (intxt.length()>0)
     {
       if (params.getVal("molfmt").equals("cdx"))
-      {
-        inbytes=Base64Decoder.decodeToBytes(intxt);
-      }
-      else
-      {
-        inbytes=intxt.getBytes("utf-8");
-      }
+        inbytes = Base64Decoder.decodeToBytes(intxt);
+      else 
+        inbytes = intxt.getBytes("utf-8");
     }
     else
     {
@@ -322,13 +246,9 @@ public class depict_servlet extends HttpServlet
       String orig_fname = mrequest.getOriginalFileName(fname);
       String molfmt_auto = MFileFormatUtil.getMostLikelyMolFormat(orig_fname);
       if (orig_fname!=null && molfmt_auto!=null)
-      {
         molReader = new MolImporter(new ByteArrayInputStream(inbytes),molfmt_auto);
-      }
       else
-      {
         molReader = new MolImporter(new ByteArrayInputStream(inbytes));
-      }
     }
     else
     {
@@ -357,7 +277,7 @@ public class depict_servlet extends HttpServlet
       if (ifile!=null)
         molReader2 = new MolImporter(new FileInputStream(ifile));
       else
-        molReader2 = new MolImporter(new ByteArrayInputStream(inbytes),"mrv");
+        molReader2 = new MolImporter(new ByteArrayInputStream(inbytes), "mrv");
       MDocument mdoc = molReader2.nextDoc();
       molReader2.close();
       for (int i=0;i<10;++i)
@@ -366,7 +286,7 @@ public class depict_servlet extends HttpServlet
         if (c==null) break;
         atomColors.add(c);
         if (params.isChecked("verbose"))
-          errors.add(String.format("atomcolor[%d]: %02X%02X%02X",i,c.getRed(),c.getGreen(),c.getBlue()));
+          errors.add(String.format("atomcolor[%d]: %02X%02X%02X", i, c.getRed(), c.getGreen(), c.getBlue()));
       }
     }
 
@@ -380,13 +300,13 @@ public class depict_servlet extends HttpServlet
       {
         intxt = Base64Encoder.encode(inbytes);
         if (params.getVal("molfmt").equals("automatic"))
-          params.setVal("molfmt","cdx");
+          params.setVal("molfmt", "cdx");
       }
       else
       {
-        intxt = new String(inbytes,"utf-8");
+        intxt = new String(inbytes, "utf-8");
       }
-      params.setVal("intxt",intxt);
+      params.setVal("intxt", intxt);
     }
 
     Molecule m;
@@ -407,7 +327,7 @@ public class depict_servlet extends HttpServlet
       {
         m.aromatize(MoleculeGraph.AROM_GENERAL); // aromatize so smarts work correctly.
         if (params.isChecked("align2smarts")&&(!params.isChecked("use2d")||m.getDim()<2))
-          m.clean(2,null,null);
+          m.clean(2, null, null);
       }
       mols.add(m);
     }
@@ -452,7 +372,7 @@ public class depict_servlet extends HttpServlet
     }
     if (params.isChecked("verbose"))
     {
-      String desc=MFileFormatUtil.getFormat(molReader.getFormat()).getDescription();
+      String desc = MFileFormatUtil.getFormat(molReader.getFormat()).getDescription();
       errors.add("input format:  "+molReader.getFormat()+" ("+desc+")");
       errors.add("mols read:  "+mols.size());
     }
@@ -465,17 +385,17 @@ public class depict_servlet extends HttpServlet
   private static String FormHtm(MultipartRequest mrequest,HttpServletResponse response)
       throws IOException
   {
-    String molfmt_menu="<SELECT NAME=\"molfmt\">\n";
+    String molfmt_menu ="< SELECT NAME=\"molfmt\">\n";
     molfmt_menu+=("<OPTION VALUE=\"automatic\">automatic\n");
     for (String fmt: MFileFormatUtil.getMolfileFormats())
     {
-      String desc=MFileFormatUtil.getFormat(fmt).getDescription();
+      String desc = MFileFormatUtil.getFormat(fmt).getDescription();
       molfmt_menu+=("<OPTION VALUE=\""+fmt+"\">"+desc+"\n");
     }
     molfmt_menu+=("</SELECT>\n");
-    molfmt_menu=molfmt_menu.replace(params.getVal("molfmt")+"\">",params.getVal("molfmt")+"\" SELECTED>\n");
+    molfmt_menu = molfmt_menu.replace(params.getVal("molfmt")+"\">",params.getVal("molfmt")+"\" SELECTED>\n");
 
-    String size_menu="<SELECT NAME=\"size\">\n";
+    String size_menu ="< SELECT NAME=\"size\">\n";
     for (String key:sizes_h.keySet())
     {
       size_menu+=("<OPTION VALUE=\""+key+"\">"+key+" - "+sizes_h.get(key)+"x"+sizes_w.get(key)+"\n");
@@ -483,25 +403,25 @@ public class depict_servlet extends HttpServlet
     size_menu+="</SELECT>\n";
     size_menu=size_menu.replace("\""+params.getVal("size")+"\">","\""+params.getVal("size")+"\" SELECTED>\n");
 
-    String mode_menu="<SELECT NAME=\"mode\">\n";
+    String mode_menu = "<SELECT NAME=\"mode\">\n";
     mode_menu+="<OPTION VALUE=\"bow\">BOW\n";
     mode_menu+="<OPTION VALUE=\"cob\">COB\n";
     mode_menu+="<OPTION VALUE=\"cow\">COW\n";
     mode_menu+="</SELECT>\n";
-    mode_menu=mode_menu.replace("\""+params.getVal("mode")+"\">","\""+params.getVal("mode")+"\" SELECTED>\n");
+    mode_menu = mode_menu.replace("\""+params.getVal("mode")+"\">","\""+params.getVal("mode")+"\" SELECTED>\n");
 
-    String ncols_menu="<SELECT NAME=\"ncols\">";
+    String ncols_menu = "<SELECT NAME=\"ncols\">";
     ncols_menu+=("<OPTION VALUE=\"auto\">auto");
     for (int i=1;i<11;++i) ncols_menu+=("<OPTION VALUE=\""+i+"\">"+i);
     ncols_menu+="</SELECT>\n";
-    ncols_menu=ncols_menu.replace("\""+params.getVal("ncols")+"\">","\""+params.getVal("ncols")+"\" SELECTED>\n");
+    ncols_menu = ncols_menu.replace("\""+params.getVal("ncols")+"\">","\""+params.getVal("ncols")+"\" SELECTED>\n");
 
     String imgfmt_png="";
     String imgfmt_jpeg="";
     if (params.getVal("imgfmt").equals("jpeg")) imgfmt_jpeg="CHECKED";
     else imgfmt_png="CHECKED";
 
-    String htm=
+    String htm =
     ("<FORM NAME=\"mainform\" METHOD=POST")
     +(" ACTION=\""+response.encodeURL(SERVLETNAME)+"\"")
     +(" ENCTYPE=\"multipart/form-data\">\n")
@@ -573,10 +493,10 @@ public class depict_servlet extends HttpServlet
   /////////////////////////////////////////////////////////////////////////////
   private static ArrayList<Molecule> Parts2mols(ArrayList<Molecule> mols)
   {
-    ArrayList<Molecule> partmols=new ArrayList<Molecule>();
+    ArrayList<Molecule> partmols = new ArrayList<Molecule>();
     for (Molecule mol:mols)
     {
-      Molecule[] partmols_this=mol.convertToFrags();
+      Molecule[] partmols_this = mol.convertToFrags();
       int i_part=0;
       for (Molecule partmol:partmols_this)
       {
@@ -588,18 +508,14 @@ public class depict_servlet extends HttpServlet
     return partmols;
   }
   /////////////////////////////////////////////////////////////////////////////
-  private static void Depict(MultipartRequest mrequest,HttpServletResponse response)
+  private static void Depict(MultipartRequest mrequest, HttpServletResponse response)
       throws IOException,ServletException
   {
     int n_mols=0;
-    int w=sizes_w.get(params.getVal("size"));
-    int h=sizes_h.get(params.getVal("size"));
-    int n_cols=1;
-    if (params.getVal("ncols").equals("auto"))
-      n_cols=(int)(900.0/(float)w);
-    else
-      n_cols=Integer.parseInt(params.getVal("ncols"));
-    String depictopts=("mode="+params.getVal("mode"));
+    int w = sizes_w.get(params.getVal("size"));
+    int h = sizes_h.get(params.getVal("size"));
+    int n_cols = (params.getVal("ncols").equals("auto")) ? (int)(900.0/(float)w) : Integer.parseInt(params.getVal("ncols"));
+    String depictopts = ("mode="+params.getVal("mode"));
     if (params.getVal("imgfmt").equals("jpeg")) depictopts+=("&imgfmt=jpeg");
     else depictopts+=("&imgfmt=png");
     if (params.isChecked("showarom")) depictopts+=("&arom_gen=true");
@@ -693,10 +609,8 @@ public class depict_servlet extends HttpServlet
       if (params.isChecked("showprops"))
       {
         prophtm_this+=("<UL>\n");
-        for  (String key:mol.properties().getKeys())
-        {
+        for (String key:mol.properties().getKeys())
           prophtm_this+=("<LI>"+key+":"+mol.getProperty(key)+"\n");
-        }
         prophtm_this+=("</UL>\n");
         prophtm+=("<LI>"+mol.getName()+"\n"+prophtm_this);
       }
@@ -704,23 +618,23 @@ public class depict_servlet extends HttpServlet
       String imhtm="";
       if (mdlcode!=null)
       {
-        imhtm = HtmUtils.Mdlcode2ImgHtm(mdlcode,depictopts,h,w,
+        imhtm = HtmUtils.Mdlcode2ImgHtm(mdlcode, depictopts, h, w,
                           MOL2IMG_SERVLETURL,
-                          params.getVal("zoomable").equals("CHECKED"),4,
+                          params.getVal("zoomable").equals("CHECKED"), 4,
                           "go_zoom_mdl2img");
       }
       else if (mrvcode!=null)
       {
-        imhtm = HtmUtils.Mrvcode2ImgHtm(mrvcode,atomColors,depictopts,h,w,
+        imhtm = HtmUtils.Mrvcode2ImgHtm(mrvcode, atomColors, depictopts, h, w,
                           MOL2IMG_SERVLETURL,
-                          params.getVal("zoomable").equals("CHECKED"),4,
+                          params.getVal("zoomable").equals("CHECKED"), 4,
                           "go_zoom_mrv2img");
       }
       else
       {
-        imhtm = HtmUtils.Smi2ImgHtm(smiles,depictopts,h,w,
+        imhtm = HtmUtils.Smi2ImgHtm(smiles, depictopts, h, w,
                           MOL2IMG_SERVLETURL,
-                          params.getVal("zoomable").equals("CHECKED"),4,
+                          params.getVal("zoomable").equals("CHECKED"), 4,
                           "go_zoom_smi2img");
       }
       tablehtm+=("<TD BGCOLOR=\"white\" ALIGN=\"CENTER\">"+imhtm+"<BR>");
@@ -765,13 +679,6 @@ public class depict_servlet extends HttpServlet
     outputs.add(tablehtm);
     outputs.add(prophtm+"</OL>\n");
     errors.add("n_mols: "+n_mols);
-
-    if (LOGFILE!=null)
-    {
-      PrintWriter out_log = new PrintWriter(new BufferedWriter(new FileWriter(LOGFILE, true)));
-    out_log.printf("%s\t%s\t%d\n", DATESTR, REMOTEHOST, n_mols); 
-      out_log.close();
-    }
   }
   /////////////////////////////////////////////////////////////////////////////
   private static ArrayList<String> SmiPropTags(byte[] inbytes)
@@ -866,7 +773,7 @@ public class depict_servlet extends HttpServlet
   private static String HelpHtm()
   {
     return (
-    "<B>"+APPNAME+" help</B><P>\n"+
+    "<B>"+APPNAME+" Help</B><P>\n"+
     "This web app consists of (1) a Java servlet using JChem\n"+
     "for the user interface, and (2) a Java servlet using JChem which\n"+
     "generates inline graphics, PNG or JPEG.\n"+
@@ -896,18 +803,16 @@ public class depict_servlet extends HttpServlet
   public void init(ServletConfig conf) throws ServletException
   {
     super.init(conf);
-    CONTEXT=getServletContext();	// inherited method
-    CONTEXTPATH=CONTEXT.getContextPath();
+    CONTEXT = getServletContext();	// inherited method
+    CONTEXTPATH = CONTEXT.getContextPath();
     try { APPNAME=conf.getInitParameter("APPNAME"); }
-    catch (Exception e) { APPNAME=this.getServletName(); }
-    UPLOADDIR=conf.getInitParameter("UPLOADDIR");
+    catch (Exception e) { APPNAME = this.getServletName(); }
+    UPLOADDIR = conf.getInitParameter("UPLOADDIR");
     if (UPLOADDIR==null)
       throw new ServletException("Please supply UPLOADDIR parameter");
-    LOGDIR=conf.getInitParameter("LOGDIR")+CONTEXTPATH;
-    if (LOGDIR==null) LOGDIR="/tmp"+CONTEXTPATH+"_logs";
-    try { N_MAX=Integer.parseInt(conf.getInitParameter("N_MAX")); }
+    try { N_MAX = Integer.parseInt(conf.getInitParameter("N_MAX")); }
     catch (Exception e) { N_MAX=100; }
-    PROXY_PREFIX=((conf.getInitParameter("PROXY_PREFIX")!=null)?conf.getInitParameter("PROXY_PREFIX"):"");
+    PROXY_PREFIX = ((conf.getInitParameter("PROXY_PREFIX")!=null)?conf.getInitParameter("PROXY_PREFIX"):"");
   }
   /////////////////////////////////////////////////////////////////////////////
   public void doGet(HttpServletRequest request, HttpServletResponse response)

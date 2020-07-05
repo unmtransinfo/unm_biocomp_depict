@@ -1,10 +1,11 @@
 package edu.unm.health.biocomp.depict;
 
 import java.io.*;
-import java.text.*;
 import java.util.*;
 import java.util.regex.*;
 import java.awt.Color;
+
+import org.apache.commons.cli.*; // CommandLine, CommandLineParser, HelpFormatter, OptionBuilder, Options, ParseException, PosixParser
 
 import chemaxon.formats.*;
 import chemaxon.struc.*;
@@ -14,11 +15,10 @@ import chemaxon.license.LicenseManager;
 
 
 /**	Utility/test app: Input one molecule, generates PNG or JPEG image.
-	<br>
-	@author Jeremy J Yang
 */
 public class mol2img_app
 {
+  private static String APPNAME="MOL2IMG";
   private static int verbose=0;
   private static String ifile=null;
   private static String ofile=null;
@@ -33,64 +33,54 @@ public class mol2img_app
   private static Boolean transparent=false;
   private static String smarts=null;
 
-  private static void Help(String msg)
+  public static void main(String[] args) throws Exception
   {
-    System.err.println(msg+"\n"
-      +"mol2img - depict utility\n"
-      +"\n"
-      +"usage: mol2img [options]\n"
-      +"\n"
-      +"required:\n"
-      +"    -i IFILE .................. input molecule file\n"
-      +"    -o OFILE .................. output file\n"
-      +"\n"
-      +"options:\n"
-      +"    -imgfmt FMT ............... image format (PNG|JPEG) ["+imgfmt+"]\n"
-      +"    -width W .................. width ["+width+"]\n"
-      +"    -height H ................. height ["+height+"]\n"
-      +"    -kekule ................... kekule\n"
-      +"    -arom_gen ................. aromatic general\n"
-      +"    -arom_bas ................. aromatic basic\n"
-      +"    -showh .................... show Hs\n"
-      +"    -transparent .............. transparent (PNG only)\n"
-      +"    -maxscale S ............... prevent overscaling small mols ["+maxscale+"]\n"
-      +"    -smarts SMARTS ............ pattern match and highlight\n"
-      +"    -v[v] ..................... verbose [very]\n"
-      +"    -h ........................ this help\n");
-    System.exit(1);
-  }
-  /////////////////////////////////////////////////////////////////////////////
-  private static void ParseCommand(String args[])
-  {
-    for (int i=0;i<args.length;++i)
-    {
-      if (args[i].equals("-i")) ifile=args[++i];
-      else if (args[i].equals("-o")) ofile=args[++i];
-      else if (args[i].equals("-width")) width=Integer.parseInt(args[++i]);
-      else if (args[i].equals("-height")) height=Integer.parseInt(args[++i]);
-      else if (args[i].equals("-imgfmt")) imgfmt=args[++i];
-      else if (args[i].equals("-maxscale")) maxscale=Integer.parseInt(args[++i]);
-      else if (args[i].equals("-kekule")) kekule=true;
-      else if (args[i].equals("-arom_gen")) arom_gen=true;
-      else if (args[i].equals("-arom_bas")) arom_bas=true;
-      else if (args[i].equals("-showh")) showh=true;
-      else if (args[i].equals("-transparent")) transparent=true;
-      else if (args[i].equals("-smarts")) smarts=args[++i];
-      else if (args[i].equals("-v")) verbose=1;
-      else if (args[i].equals("-vv")) verbose=2;
-      else if (args[i].equals("-h")) Help("");
-      else Help("Unknown option: "+args[i]);
+    String HELPHEADER =  "MOL2IMG - depict utility";
+    Options opts = new Options();
+    opts.addOption(Option.builder("i").required().hasArg().desc("Input molecule file").build());
+    opts.addOption(Option.builder("o").hasArg().desc("Output file").build());
+    opts.addOption(Option.builder("imgfmt").hasArg().desc("Image format (PNG|JPEG) ["+imgfmt+"]").build());
+    opts.addOption(Option.builder("width").type(Number.class).hasArg().desc("width ["+width+"]").build());
+    opts.addOption(Option.builder("height").type(Number.class).hasArg().desc("height ["+height+"]").build());
+    opts.addOption(Option.builder("kekule").desc("Kekule").build());
+    opts.addOption(Option.builder("arom_gen").desc("ChemAxon general aromaticity model").build());
+    opts.addOption(Option.builder("arom_bas").desc("ChemAxon basic aromaticity model").build());
+    opts.addOption(Option.builder("showh").desc("Show hydrogens").build());
+    opts.addOption(Option.builder("transparent").desc("transparent (PNG only)").build());
+    opts.addOption(Option.builder("maxscale").type(Number.class).hasArg().desc("prevent overscaling small mols ["+maxscale+"]").build());
+    opts.addOption(Option.builder("smarts").hasArg().desc("pattern match and highlight").build());
+    opts.addOption("v", "verbose", false, "Verbose.");
+    opts.addOption("h", "help", false, "Show this help.");
+    HelpFormatter helper = new HelpFormatter();
+    CommandLineParser clip = new PosixParser();
+    CommandLine clic = null;
+    try {
+      clic = clip.parse(opts, args);
+    } catch (ParseException e) {
+      helper.printHelp(APPNAME, HELPHEADER, opts, e.getMessage(), true);
+      System.exit(0);
     }
-  }
-  /////////////////////////////////////////////////////////////////////////////
-  public static void main(String[] args)
-    throws IOException
-  {
-    ParseCommand(args);
+    ifile = clic.getOptionValue("i");
+    if (clic.hasOption("o")) ofile = clic.getOptionValue("o");
+    if (clic.hasOption("imgfmt")) imgfmt = clic.getOptionValue("imgfmt");
+    if (clic.hasOption("smarts")) smarts = clic.getOptionValue("smarts");
+    if (clic.hasOption("width")) width = (Integer)(clic.getParsedOptionValue("width"));
+    if (clic.hasOption("height")) height = (Integer)(clic.getParsedOptionValue("height"));
+    if (clic.hasOption("maxscale")) maxscale = (Integer)(clic.getParsedOptionValue("maxscale"));
+    if (clic.hasOption("kekule")) kekule = true;
+    if (clic.hasOption("arom_gen")) arom_gen = true;
+    if (clic.hasOption("arom_bas")) arom_bas = true;
+    if (clic.hasOption("showh")) showh = true;
+    if (clic.hasOption("transparent")) transparent = true;
+    if (clic.hasOption("vv")) verbose = 2;
+    else if (clic.hasOption("v")) verbose = 1;
+    if (clic.hasOption("h")) {
+      helper.printHelp(APPNAME, HELPHEADER, opts, "", true);
+      System.exit(0);
+    }
 
-    if (ifile==null) Help("Input file required.");
-
-    if (!(new File(ifile).exists())) Help("Non-existent input file: "+ifile);
+    if (!(new File(ifile).exists()))
+      helper.printHelp(APPNAME, HELPHEADER, opts, ("Non-existent input file: "+ifile), true);
     MolImporter molReader = new MolImporter(ifile);
 
     OutputStream ostream=null;
@@ -100,7 +90,6 @@ public class mol2img_app
       ostream = ((OutputStream)System.out);
 
     if (verbose>1)
-      //System.err.println("JChem version: "+chemaxon.jchem.version.VersionInfo.getVersion());
       System.err.println("JChem version: "+com.chemaxon.version.VersionInfo.getVersion());
 
     if (imgfmt.equalsIgnoreCase("jpeg") || imgfmt.equalsIgnoreCase("jpg"))
@@ -143,8 +132,8 @@ public class mol2img_app
       try {
         smartsReader.setMolecule(smarts);
       }
-      catch (MolFormatException me) {
-        me.printStackTrace();
+      catch (MolFormatException e) {
+        e.printStackTrace();
       }
 
       Molecule query = smartsReader.getMolecule();
@@ -155,8 +144,8 @@ public class mol2img_app
         ok=search.isMatching();
         matchs=search.findAll();
       }
-      catch (SearchException se) {
-        se.printStackTrace();
+      catch (SearchException e) {
+        e.printStackTrace();
       }
 
       int n_matchs=((matchs!=null)?matchs.length:0);
@@ -184,7 +173,7 @@ public class mol2img_app
       }
     }
 
-    byte[] data = MolExporter.exportToBinFormat(mol,imgfmt);
+    byte[] data = MolExporter.exportToBinFormat(mol, imgfmt);
 
     ostream.write(data);
     ostream.close();
