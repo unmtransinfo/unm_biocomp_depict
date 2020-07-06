@@ -385,7 +385,7 @@ public class depict_servlet extends HttpServlet
   private static String FormHtm(MultipartRequest mrequest,HttpServletResponse response)
       throws IOException
   {
-    String molfmt_menu ="< SELECT NAME=\"molfmt\">\n";
+    String molfmt_menu = "<SELECT NAME=\"molfmt\">\n";
     molfmt_menu+=("<OPTION VALUE=\"automatic\">automatic\n");
     for (String fmt: MFileFormatUtil.getMolfileFormats())
     {
@@ -395,7 +395,7 @@ public class depict_servlet extends HttpServlet
     molfmt_menu+=("</SELECT>\n");
     molfmt_menu = molfmt_menu.replace(params.getVal("molfmt")+"\">",params.getVal("molfmt")+"\" SELECTED>\n");
 
-    String size_menu ="< SELECT NAME=\"size\">\n";
+    String size_menu = "<SELECT NAME=\"size\">\n";
     for (String key:sizes_h.keySet())
     {
       size_menu+=("<OPTION VALUE=\""+key+"\">"+key+" - "+sizes_h.get(key)+"x"+sizes_w.get(key)+"\n");
