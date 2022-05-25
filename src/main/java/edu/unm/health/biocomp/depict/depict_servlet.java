@@ -133,7 +133,7 @@ public class depict_servlet extends HttpServlet
         HashMap<String,String> t = new HashMap<String,String>();
         t.put("JCHEM_LICENSE_OK", (LicenseManager.isLicensed(LicenseManager.JCHEM)?"True":"False"));
         t.put("JCHEM_MOLSEARCH_LICENSE_OK", (((new MolSearch()).isLicensed())?"True":"False"));
-        out.print(HtmUtils.TestTxt(APPNAME,t));
+        out.print(HtmUtils.TestTxt(APPNAME, t));
       }
       else	// GET method, initial invocation of servlet w/ no params
       {
@@ -151,7 +151,7 @@ public class depict_servlet extends HttpServlet
       throws IOException,ServletException
   {
     SERVLETNAME = this.getServletName();
-    MOL2IMG_SERVLETURL =( PROXY_PREFIX+CONTEXTPATH+"/mol2img");
+    MOL2IMG_SERVLETURL = (PROXY_PREFIX+CONTEXTPATH+"/mol2img");
     outputs = new ArrayList<String>();
     errors = new ArrayList<String>();
     params = new HttpParams();
@@ -159,17 +159,16 @@ public class depict_servlet extends HttpServlet
     sizes_h = new LinkedHashMap<String,Integer>();
     sizes_w = new LinkedHashMap<String,Integer>();
 
-    String logo_htm="<TABLE CELLSPACING=5 CELLPADDING=5><TR><TD>";
-    String imghtm=("<IMG BORDER=0 SRC=\""+PROXY_PREFIX+CONTEXTPATH+"/images/biocomp_logo_only.gif\">");
-    String tiphtm=(APPNAME+" web app from UNM Translational Informatics.");
-    String href=("https://datascience.unm.edu/");
-    logo_htm+=(HtmUtils.HtmTipper(imghtm,tiphtm,href,200,"white"));
-    logo_htm+="</TD><TD>";
-    imghtm=("<IMG BORDER=0 SRC=\""+PROXY_PREFIX+CONTEXTPATH+"/images/chemaxon_powered_100px.png\">");
-    tiphtm=("JChem from ChemAxon Ltd.");
-    href=("https://www.chemaxon.com");
-    logo_htm+=(HtmUtils.HtmTipper(imghtm,tiphtm,href,200,"white"));
-    logo_htm+="</TD></TR></TABLE>";
+    String logo_htm = "<TABLE CELLSPACING=5 CELLPADDING=5><TR><TD>";
+    String imghtm = ("<IMG BORDER=0 SRC=\""+PROXY_PREFIX+CONTEXTPATH+"/images/biocomp_logo_only.gif\">");
+    String tiphtm = (APPNAME+" web app from UNM Translational Informatics.");
+    logo_htm += HtmUtils.HtmTipper(imghtm, tiphtm, "https://datascience.unm.edu/", 200, "white");
+    logo_htm += "</TD><TD>";
+
+    imghtm = ("<IMG BORDER=0 SRC=\""+PROXY_PREFIX+CONTEXTPATH+"/images/chemaxon_powered_100px.png\">");
+    tiphtm = "JChem from ChemAxon Ltd.";
+    logo_htm += HtmUtils.HtmTipper(imghtm, tiphtm, "https://www.chemaxon.com", 200, "white");
+    logo_htm += "</TD></TR></TABLE>";
     errors.add(logo_htm);
 
     //booleans:
@@ -179,22 +178,23 @@ public class depict_servlet extends HttpServlet
     sizes_h.put("l",280); sizes_w.put("l",380);
     sizes_h.put("xl",480); sizes_w.put("xl",640);
 
-    try { LicenseManager.setLicenseFile(CONTEXT.getRealPath("")+"/.chemaxon/license.cxl"); }
-    catch (Exception e) {
-      errors.add("ERROR: "+e.getMessage());
-      if (System.getenv("HOME") !=null) {
-        try { LicenseManager.setLicenseFile(System.getenv("HOME")+"/.chemaxon/license.cxl"); }
-        catch (Exception e2) {
-          errors.add("ERROR: "+e2.getMessage());
-        }
-      }
-    }
-    LicenseManager.refresh();
-    if (!LicenseManager.isLicensed(LicenseManager.JCHEM))
-    {
-      errors.add("ERROR: ChemAxon license error; JCHEM required.");
-      return false;
-    }
+    //License may not be needed, at least for basic depictions.
+//    try { LicenseManager.setLicenseFile(CONTEXT.getRealPath("")+"/.chemaxon/license.cxl"); }
+//    catch (Exception e) {
+//      errors.add("ERROR: "+e.getMessage());
+//      if (System.getenv("HOME") !=null) {
+//        try { LicenseManager.setLicenseFile(System.getenv("HOME")+"/.chemaxon/license.cxl"); }
+//        catch (Exception e2) {
+//          errors.add("ERROR: "+e2.getMessage());
+//        }
+//      }
+//    }
+//    LicenseManager.refresh();
+//    if (!LicenseManager.isLicensed(LicenseManager.JCHEM))
+//    {
+//      errors.add("ERROR: ChemAxon license error; JCHEM required.");
+//      return false;
+//    }
 
     if (mrequest==null) return false;
 
@@ -369,7 +369,7 @@ public class depict_servlet extends HttpServlet
         try {
           molsearch.setQuery(smartsReader.getMolecule());
         }
-        catch (LicenseException e) {
+        catch (Exception e) {
           errors.add("ERROR: "+e.getMessage());
           molsearch=null;
         }

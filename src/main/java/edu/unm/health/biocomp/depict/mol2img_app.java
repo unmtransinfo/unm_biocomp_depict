@@ -11,7 +11,7 @@ import chemaxon.formats.*;
 import chemaxon.struc.*;
 import chemaxon.sss.search.*;
 import chemaxon.util.MolHandler;
-import chemaxon.license.LicenseManager;
+//import chemaxon.license.LicenseManager;
 
 
 /**	Utility/test app: Input one molecule, generates PNG or JPEG image.

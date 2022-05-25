@@ -18,3 +18,10 @@ Also includes 2D alignment tools (formerly in `unm_biocomp_molalign`).
 ```
 mvn clean install
 ```
+
+## Usage
+
+```
+mvn exec:java -Dexec.mainClass="edu.unm.health.biocomp.depict.mol2img_app" -Dexec.args="-i quinine.smi -o quinine.png"
+```
+
