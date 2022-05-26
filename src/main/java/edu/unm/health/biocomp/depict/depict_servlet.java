@@ -354,7 +354,7 @@ public class depict_servlet extends HttpServlet
     if (params.getVal("smarts").length()>0)
     {
       MolHandler smartsReader=new MolHandler();
-      molsearch=new MolSearch();
+      molsearch = new MolSearch();
       smartsReader.setQueryMode(true);
       try {
         smartsReader.setMolecule(params.getVal("smarts"));
@@ -373,6 +373,9 @@ public class depict_servlet extends HttpServlet
           errors.add("ERROR: "+e.getMessage());
           molsearch=null;
         }
+      }
+      if (!(new MolSearch()).isLicensed()) {
+        errors.add("ERROR: ChemAxon MolSearch not licensed; smarts matching disabled.");
       }
     }
     if (params.isChecked("verbose"))
